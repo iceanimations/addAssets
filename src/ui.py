@@ -16,6 +16,7 @@ import qutil
 import tactic_calls as tc
 #reload(tc)
 import cui
+import appUsageApp
 
 rootPath = qutil.dirname(__file__, 2)
 uiPath = osp.join(rootPath, 'ui')
@@ -39,6 +40,8 @@ class UI(Form, Base):
         self.seqBox.currentIndexChanged[str].connect(self.populateAssets)
         self.addButton.clicked.connect(self.addAssets)
         self.contextBox.currentIndexChanged[str].connect(self.callPopulateAssets)
+        
+        appUsageApp.updateDatabase('addAssets')
     
     def callPopulateAssets(self, context):
         self.populateAssets(self.seqBox.currentText(), context)
