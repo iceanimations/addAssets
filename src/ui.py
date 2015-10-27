@@ -38,11 +38,10 @@ class UI(Form, Base):
         self.epBox.currentIndexChanged[str].connect(self.populateSequences)
         self.seqBox.currentIndexChanged[str].connect(self.populateAssets)
         self.addButton.clicked.connect(self.addAssets)
-        self.rigButton.toggled.connect(self.callPopulateAssets)
-        self.shadedCombinedButton.toggled.connect(self.callPopulateAssets)
+        self.contextBox.currentIndexChanged[str].connect(self.callPopulateAssets)
     
-    def callPopulateAssets(self):
-        self.populateAssets(self.seqBox.currentText())
+    def callPopulateAssets(self, context):
+        self.populateAssets(self.seqBox.currentText(), context)
     
     def showMessage(self, **kwargs):
         return cui.showMessage(self, title=self.title, **kwargs)
@@ -94,14 +93,15 @@ class UI(Form, Base):
                                  details=qutil.dictionaryToDetails(errors))
             self.seqBox.addItems(seqs)
     
-    def populateAssets(self, seq):
+    def populateAssets(self, seq, context=None):
+        if not context: context = self.getContext()
         for item in self.items:
             item.deleteLater()
         del self.items[:]
         ep = self.epBox.currentText()
         if not ep or not seq: return
         if ep == '--Select Episode--' or seq == '--Select Sequence--': return
-        assets, errors = tc.getAssets(ep, seq, self.getContext())
+        assets, errors = tc.getAssets(ep, seq, context)
         if errors:
             self.showMessage(msg='Error occurred while retrieving the Assets',
                              icon=QMessageBox.Critical,
@@ -112,10 +112,7 @@ class UI(Form, Base):
             self.items.append(item)
             
     def getContext(self):
-        context = self.shadedCombinedButton.text()
-        if self.rigButton.isChecked():
-            context = self.rigButton.text()
-        return context
+        return self.contextBox.currentText()
             
     
     def addAssets(self):

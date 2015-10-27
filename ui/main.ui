@@ -108,26 +108,30 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
-       <widget class="QRadioButton" name="shadedCombinedButton">
+       <widget class="QComboBox" name="contextBox">
         <property name="toolTip">
-         <string>Select the context</string>
+         <string>Select Context</string>
         </property>
-        <property name="text">
-         <string>shaded/combined</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QRadioButton" name="rigButton">
-        <property name="toolTip">
-         <string>Select the context</string>
-        </property>
-        <property name="text">
-         <string>rig</string>
-        </property>
+        <item>
+         <property name="text">
+          <string>rig</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>model</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>shaded</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>shaded/combined</string>
+         </property>
+        </item>
        </widget>
       </item>
       <item>
