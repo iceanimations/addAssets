@@ -83,7 +83,7 @@ def getAssets(ep, seq, context='shaded/combined'):
     try:
         maps = symlinks.getSymlinks(server.get_base_dirs()['win32_client_repo_dir'])
     except Exception as ex:
-        errors['Could not get the maps from TACTIC']
+        errors['Could not get the maps from TACTIC'] = str(ex)
     if server:
         try:
             asset_codes = server.eval("@GET(vfx/asset_in_sequence['sequence_code', '%s'].asset_code)"%seq)
