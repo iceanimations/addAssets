@@ -159,7 +159,7 @@
          <string>Reference the selected assets</string>
         </property>
         <property name="text">
-         <string>Add</string>
+         <string>Reference</string>
         </property>
        </widget>
       </item>
