@@ -155,6 +155,9 @@
           <height>0</height>
          </size>
         </property>
+        <property name="toolTip">
+         <string>Reference the selected assets</string>
+        </property>
         <property name="text">
          <string>Add</string>
         </property>
