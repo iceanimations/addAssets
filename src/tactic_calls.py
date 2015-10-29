@@ -7,7 +7,6 @@ import sys
 sys.path.append("R:/Pipe_Repo/Projects/TACTIC")
 import tactic_client_lib as tcl
 import os
-from pprint import pprint
 import iutil.symlinks as symlinks
 
 server = None

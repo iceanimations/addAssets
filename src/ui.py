@@ -14,7 +14,7 @@ from PyQt4.QtGui import QMessageBox, qApp
 import os.path as osp
 import qutil
 import tactic_calls as tc
-#reload(tc)
+reload(tc)
 import cui
 import appUsageApp
 
