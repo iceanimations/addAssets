@@ -38,10 +38,11 @@ def getProjects():
 def setProject(project):
     errors = {}
     if server:
-        try:
-            server.set_project(project)
-        except Exception as ex:
-            errors['Could not set the project'] = str(ex)
+        if project:
+            try:
+                server.set_project(project)
+            except Exception as ex:
+                errors['Could not set the project'] = str(ex)
     else:
         errors['Could not find the TACTIC server'] = ''
     return errors
@@ -62,10 +63,11 @@ def getSequences(ep):
     seqs = []
     errors = {}
     if server:
-        try:
-            seqs = server.eval("@GET(vfx/sequence['episode_code', '%s'].code)"%ep)
-        except Exception as ex:
-            errors['Could not get the list of sequences from TACTIC'] = str(ex)
+        if ep:
+            try:
+                seqs = server.eval("@GET(vfx/sequence['episode_code', '%s'].code)"%ep)
+            except Exception as ex:
+                errors['Could not get the list of sequences from TACTIC'] = str(ex)
     else:
         errors['Could not find the TACTIC server'] = ""
     return seqs, errors
@@ -79,41 +81,42 @@ def getLatestFile(file1, file2):
 def getAssets(ep, seq, context='shaded/combined'):
     errors = {}
     asset_paths = []
-    try:
-        maps = symlinks.getSymlinks(server.get_base_dirs()['win32_client_repo_dir'])
-    except Exception as ex:
-        errors['Could not get the maps from TACTIC'] = str(ex)
-    if server:
+    if ep and seq:
         try:
-            asset_codes = server.eval("@GET(vfx/asset_in_sequence['sequence_code', '%s'].asset_code)"%seq)
+            maps = symlinks.getSymlinks(server.get_base_dirs()['win32_client_repo_dir'])
         except Exception as ex:
-            errors['Could not get the Sequence Assets from TACTIC'] = str(ex)
-        if not asset_codes: return []
-        try:
-            ep_assets = server.query('vfx/asset_in_episode', filters = [('asset_code', asset_codes), ('episode_code', ep)])
-        except Exception as ex:
-            errors['Could not get the Episode Assets from TACTIC'] = str(ex)
-        for ep_asset in ep_assets:
+            errors['Could not get the maps from TACTIC'] = str(ex)
+        if server:
             try:
-                snapshot = server.get_snapshot(ep_asset, context=context, version=0, versionless=True, include_paths_dict=True)
+                asset_codes = server.eval("@GET(vfx/asset_in_sequence['sequence_code', '%s'].asset_code)"%seq)
             except Exception as ex:
-                errors['Could not get the Snapshot from TACTIC for %s'%ep_asset['asset_code']] = str(ex)
-            #if not snapshot: snapshot = server.get_snapshot(ep_asset, context='shaded', version=0, versionless=True, include_paths_dict=True)
-            if snapshot:
-                paths = snapshot['__paths_dict__']
-                if paths:
-                    newPaths = None
-                    if paths.has_key('maya'):
-                        newPaths = paths['maya']
-                    elif paths.has_key('main'):
-                        newPaths = paths['main']
-                    else:
-                        errors['Could not find a Maya file for %s'%ep_asset['asset_code']] = 'No Maya or Main key found'
-                    if newPaths:
-                        if len(newPaths) > 1:
-                            asset_paths.append(symlinks.translatePath(getLatestFile(*newPaths), maps))
+                errors['Could not get the Sequence Assets from TACTIC'] = str(ex)
+            if not asset_codes: return []
+            try:
+                ep_assets = server.query('vfx/asset_in_episode', filters = [('asset_code', asset_codes), ('episode_code', ep)])
+            except Exception as ex:
+                errors['Could not get the Episode Assets from TACTIC'] = str(ex)
+            for ep_asset in ep_assets:
+                try:
+                    snapshot = server.get_snapshot(ep_asset, context=context, version=0, versionless=True, include_paths_dict=True)
+                except Exception as ex:
+                    errors['Could not get the Snapshot from TACTIC for %s'%ep_asset['asset_code']] = str(ex)
+                #if not snapshot: snapshot = server.get_snapshot(ep_asset, context='shaded', version=0, versionless=True, include_paths_dict=True)
+                if snapshot:
+                    paths = snapshot['__paths_dict__']
+                    if paths:
+                        newPaths = None
+                        if paths.has_key('maya'):
+                            newPaths = paths['maya']
+                        elif paths.has_key('main'):
+                            newPaths = paths['main']
                         else:
-                            asset_paths.append(symlinks.translatePath(newPaths[0], maps))
+                            errors['Could not find a Maya file for %s'%ep_asset['asset_code']] = 'No Maya or Main key found'
+                        if newPaths:
+                            if len(newPaths) > 1:
+                                asset_paths.append(symlinks.translatePath(getLatestFile(*newPaths), maps))
+                            else:
+                                asset_paths.append(symlinks.translatePath(newPaths[0], maps))
     return asset_paths, errors
 
 if __name__ == "__main__":

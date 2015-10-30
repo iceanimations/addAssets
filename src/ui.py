@@ -26,9 +26,9 @@ class UI(Form, Base):
     def __init__(self, parent=parentWin):
         super(UI, self).__init__(parent)
         self.setupUi(self)
-        
+
         self.items = []
-        self.title = 'Add Assets'
+        self.title = 'Sequence Assets'
         
         self.progressBar.hide()
         self.setWindowTitle(self.title)
@@ -41,7 +41,33 @@ class UI(Form, Base):
         self.addButton.clicked.connect(self.addAssets)
         self.contextBox.currentIndexChanged[str].connect(self.callPopulateAssets)
         
+        try:
+            pro = parent.getProject()
+            ep = parent.getEpisode()
+            seq = parent.getSequence()
+            print pro, ep, seq
+            self.setContext(pro, ep, seq)
+        except:
+            pass
+        
         appUsageApp.updateDatabase('addAssets')
+        
+    def setContext(self, pro, ep, seq):
+        if pro:
+            for i in range(self.projectBox.count()):
+                if self.projectBox.itemText(i) == pro:
+                    self.projectBox.setCurrentIndex(i)
+                    break
+        if ep:
+            for i in range(self.epBox.count()):
+                if self.epBox.itemText(i) == ep:
+                    self.epBox.setCurrentIndex(i)
+                    break
+        if seq:
+            for i in range(self.seqBox.count()):
+                if self.seqBox.itemText(i) == seq:
+                    self.seqBox.setCurrentIndex(i)
+                    break
     
     def callPopulateAssets(self, context):
         self.populateAssets(self.seqBox.currentText(), context)
