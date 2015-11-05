@@ -11,6 +11,7 @@ try:
 except:
     from PyQt4 import uic
 from PyQt4.QtGui import QMessageBox, qApp
+from PyQt4.QtCore import pyqtSignal
 import os.path as osp
 import qutil
 import tactic_calls as tc
@@ -40,6 +41,7 @@ class UI(Form, Base):
         self.seqBox.currentIndexChanged[str].connect(self.populateAssets)
         self.addButton.clicked.connect(self.addAssets)
         self.contextBox.currentIndexChanged[str].connect(self.callPopulateAssets)
+        self.selectAllButton.clicked.connect(self.selectAll)
         
         try:
             pro = parent.getProject()
@@ -51,6 +53,13 @@ class UI(Form, Base):
             pass
         
         appUsageApp.updateDatabase('addAssets')
+        
+    def isSelectAll(self):
+        return self.selectAllButton.isChecked()
+        
+    def selectAll(self):
+        for item in self.items:
+            item.setSelected(self.isSelectAll())
         
     def setContext(self, pro, ep, seq):
         if pro:
@@ -137,8 +146,18 @@ class UI(Form, Base):
                              details=qutil.dictionaryToDetails(errors))
         for asset in assets:
             item = Item(self, asset)
+            item.setSelected(self.isSelectAll())
             self.itemsLayout.addWidget(item)
             self.items.append(item)
+        map(lambda itm: itm.selectionChanged.connect(self.handleItemSelectionChange), self.items)
+        
+    def handleItemSelectionChange(self, val):
+        flag = True
+        for item in self.items:
+            if not item.isSelected():
+                flag = False
+                break
+        self.selectAllButton.setChecked(flag)
             
     def getContext(self):
         return self.contextBox.currentText()
@@ -165,6 +184,7 @@ class UI(Form, Base):
 
 Form1, Base1 = uic.loadUiType(osp.join(uiPath, 'item.ui'))
 class Item(Form1, Base1):
+    selectionChanged = pyqtSignal(bool)
     def __init__(self, parent=None, name='', num=1):
         super(Item, self).__init__(parent)
         self.setupUi(self)
@@ -174,6 +194,7 @@ class Item(Form1, Base1):
         self.populate()
         
         self.numBox.valueChanged[int].connect(self.setNum)
+        self.assetButton.clicked.connect(lambda: self.selectionChanged.emit(self.isSelected()))
         
     def setName(self, name):
         self.name = name
@@ -189,6 +210,9 @@ class Item(Form1, Base1):
         
     def isSelected(self):
         return self.assetButton.isChecked()
+    
+    def setSelected(self, selected):
+        self.assetButton.setChecked(selected)
     
     def getName(self):
         return self.name

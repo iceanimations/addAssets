@@ -60,6 +60,16 @@
      </layout>
     </item>
     <item>
+     <widget class="QCheckBox" name="selectAllButton">
+      <property name="text">
+       <string>Select All</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item>
      <widget class="QScrollArea" name="scrollArea">
       <property name="widgetResizable">
        <bool>true</bool>
@@ -70,7 +80,7 @@
          <x>0</x>
          <y>0</y>
          <width>406</width>
-         <height>510</height>
+         <height>487</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
