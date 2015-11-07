@@ -11,9 +11,10 @@ import iutil.symlinks as symlinks
 
 server = None
 
-def setServer():
+def setServer(serv):
     errors = {}
     global server
+    if serv: server = serv; return
     try:
         server = tcl.TacticServerStub(server='dbserver', login='tactic',
                                       password='tactic123',

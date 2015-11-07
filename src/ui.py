@@ -24,7 +24,7 @@ uiPath = osp.join(rootPath, 'ui')
 
 Form, Base = uic.loadUiType(osp.join(uiPath, 'main.ui'))
 class UI(Form, Base):
-    def __init__(self, parent=parentWin):
+    def __init__(self, parent=parentWin, server=None):
         super(UI, self).__init__(parent)
         self.setupUi(self)
 
@@ -33,7 +33,7 @@ class UI(Form, Base):
         
         self.progressBar.hide()
         self.setWindowTitle(self.title)
-        self.setServer()
+        self.setServer(server)
         self.populateProjects()
         
         self.projectBox.currentIndexChanged[str].connect(self.setProject)
@@ -47,7 +47,6 @@ class UI(Form, Base):
             pro = parent.getProject()
             ep = parent.getEpisode()
             seq = parent.getSequence()
-            print pro, ep, seq
             self.setContext(pro, ep, seq)
         except:
             pass
@@ -84,8 +83,8 @@ class UI(Form, Base):
     def showMessage(self, **kwargs):
         return cui.showMessage(self, title=self.title, **kwargs)
         
-    def setServer(self):
-        errors = tc.setServer()
+    def setServer(self, server):
+        errors = tc.setServer(server)
         if errors:
             self.showMessage(msg=errors.keys()[0], icon=QMessageBox.Critical,
                              details=errors.values()[0])
