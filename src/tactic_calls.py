@@ -81,7 +81,7 @@ def getLatestFile(file1, file2):
     
 def getAssets(ep, seq, context='shaded/combined'):
     errors = {}
-    asset_paths = []
+    asset_paths = {}
     if ep and seq:
         try:
             maps = symlinks.getSymlinks(server.get_base_dirs()['win32_client_repo_dir'])
@@ -115,9 +115,9 @@ def getAssets(ep, seq, context='shaded/combined'):
                             errors['Could not find a Maya file for %s'%ep_asset['asset_code']] = 'No Maya or Main key found'
                         if newPaths:
                             if len(newPaths) > 1:
-                                asset_paths.append(symlinks.translatePath(getLatestFile(*newPaths), maps))
+                                asset_paths[ep_asset['asset_code']] = symlinks.translatePath(getLatestFile(*newPaths), maps)
                             else:
-                                asset_paths.append(symlinks.translatePath(newPaths[0], maps))
+                                asset_paths[ep_asset['asset_code']] = symlinks.translatePath(newPaths[0], maps)
     return asset_paths, errors
 
 if __name__ == "__main__":

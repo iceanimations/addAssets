@@ -28,6 +28,7 @@ class UI(Form, Base):
         super(UI, self).__init__(parent)
         self.setupUi(self)
 
+        self.parentWin = parent
         self.items = []
         self.title = 'Sequence Assets'
         
@@ -52,6 +53,19 @@ class UI(Form, Base):
             pass
         
         appUsageApp.updateDatabase('addAssets')
+        
+    def getSelectedAssets(self):
+        items = {}
+        for item in self.items:
+            if item.isSelected():
+                items[item.getName()] = [item.getNum(), item.getPath()]
+        return items
+        
+    def closeEvent(self, event):
+        try:
+            self.parentWin.closeEventAssetsWindow()
+        except:
+            pass
         
     def isSelectAll(self):
         return self.selectAllButton.isChecked()
@@ -143,8 +157,8 @@ class UI(Form, Base):
             self.showMessage(msg='Error occurred while retrieving the Assets',
                              icon=QMessageBox.Critical,
                              details=qutil.dictionaryToDetails(errors))
-        for asset in assets:
-            item = Item(self, asset)
+        for name, path in assets.items():
+            item = Item(self, path=path, name=name)
             item.setSelected(self.isSelectAll())
             self.itemsLayout.addWidget(item)
             self.items.append(item)
@@ -168,7 +182,7 @@ class UI(Form, Base):
             self.progressBar.show( )
             for i, item in enumerate(self.items):
                 if item.isSelected():
-                    path, num = item.getNameNum()
+                    path, num = item.getPathNum()
                     for _ in range(num):
                         qutil.addRef(path)
                 self.progressBar.setValue(i+1)
@@ -184,10 +198,11 @@ class UI(Form, Base):
 Form1, Base1 = uic.loadUiType(osp.join(uiPath, 'item.ui'))
 class Item(Form1, Base1):
     selectionChanged = pyqtSignal(bool)
-    def __init__(self, parent=None, name='', num=1):
+    def __init__(self, parent=None, path='', num=1, name=''):
         super(Item, self).__init__(parent)
         self.setupUi(self)
         self.num = num
+        self.path = path
         self.name = name
         
         self.populate()
@@ -195,16 +210,19 @@ class Item(Form1, Base1):
         self.numBox.valueChanged[int].connect(self.setNum)
         self.assetButton.clicked.connect(lambda: self.selectionChanged.emit(self.isSelected()))
         
-    def setName(self, name):
-        self.name = name
-        self.assetButton.setText(osp.basename(osp.splitext(self.name)[0]))
+    def setName(self, path):
+        self.path = path
+        self.assetButton.setText(osp.basename(osp.splitext(self.path)[0]))
     
     def setNum(self, num):
         self.numBox.setValue(num)
         self.num = num
         
+    def setAssetName(self, name):
+        self.assetName = name
+
     def populate(self):
-        self.setName(self.name)
+        self.setName(self.path)
         self.numBox.setValue(self.num)
         
     def isSelected(self):
@@ -212,12 +230,15 @@ class Item(Form1, Base1):
     
     def setSelected(self, selected):
         self.assetButton.setChecked(selected)
-    
+        
     def getName(self):
         return self.name
+    
+    def getPath(self):
+        return self.path
     
     def getNum(self):
         return self.num
         
-    def getNameNum(self):
-        return self.name, self.num
+    def getPathNum(self):
+        return self.path, self.num
