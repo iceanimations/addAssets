@@ -22,6 +22,10 @@ import appUsageApp
 rootPath = qutil.dirname(__file__, 2)
 uiPath = osp.join(rootPath, 'ui')
 
+projectKey = 'addAssetsProjectKey'
+epKey = 'addAssetsEpKey'
+contextKey = 'addAssetsContextKey'
+
 Form, Base = uic.loadUiType(osp.join(uiPath, 'main.ui'))
 class UI(Form, Base):
     def __init__(self, parent=parentWin, server=None):
@@ -43,14 +47,11 @@ class UI(Form, Base):
         self.addButton.clicked.connect(self.addAssets)
         self.contextBox.currentIndexChanged[str].connect(self.callPopulateAssets)
         self.selectAllButton.clicked.connect(self.selectAll)
-        
-        try:
-            pro = parent.getProject()
-            ep = parent.getEpisode()
-            seq = parent.getSequence()
-            self.setContext(pro, ep, seq)
-        except:
-            pass
+
+        project = qutil.getOptionVar(projectKey)
+        ep = qutil.getOptionVar(epKey)
+        context = qutil.getOptionVar(contextKey)
+        self.setContext(project, ep, None, context)
         
         appUsageApp.updateDatabase('addAssets')
         
@@ -75,7 +76,7 @@ class UI(Form, Base):
             if item.getPath():
                 item.setSelected(self.isSelectAll())
         
-    def setContext(self, pro, ep, seq):
+    def setContext(self, pro, ep, seq, context):
         if pro:
             for i in range(self.projectBox.count()):
                 if self.projectBox.itemText(i) == pro:
@@ -91,9 +92,15 @@ class UI(Form, Base):
                 if self.seqBox.itemText(i) == seq:
                     self.seqBox.setCurrentIndex(i)
                     break
+        if context:
+            for i in range(self.contextBox.count()):
+                if self.contextBox.itemText(i) == context:
+                    self.contextBox.setCurrentIndex(i)
+                    break
     
     def callPopulateAssets(self, context):
         self.populateAssets(self.seqBox.currentText(), context)
+        qutil.addOptionVar(contextKey, context)
     
     def showMessage(self, **kwargs):
         return cui.showMessage(self, title=self.title, **kwargs)
@@ -117,6 +124,7 @@ class UI(Form, Base):
             
     def setProject(self, project):
         self.epBox.clear()
+        qutil.addOptionVar(projectKey, project)
         self.epBox.addItem('--Select Episode--')
         if project != '--Select Project--':
             errors = tc.setProject(project)
@@ -137,6 +145,7 @@ class UI(Form, Base):
     def populateSequences(self, ep):
         self.seqBox.clear()
         self.seqBox.addItem('--Select Sequence--')
+        qutil.addOptionVar(epKey, ep)
         if ep != '--Select Episode--':
             seqs, errors = tc.getSequences(ep)
             if errors:
