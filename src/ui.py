@@ -72,7 +72,8 @@ class UI(Form, Base):
         
     def selectAll(self):
         for item in self.items:
-            item.setSelected(self.isSelectAll())
+            if item.getPath():
+                item.setSelected(self.isSelectAll())
         
     def setContext(self, pro, ep, seq):
         if pro:
@@ -159,7 +160,8 @@ class UI(Form, Base):
                              details=qutil.dictionaryToDetails(errors))
         for name, path in assets.items():
             item = Item(self, path=path, name=name)
-            item.setSelected(self.isSelectAll())
+            if item.getPath():
+                item.setSelected(self.isSelectAll())
             self.itemsLayout.addWidget(item)
             self.items.append(item)
         map(lambda itm: itm.selectionChanged.connect(self.handleItemSelectionChange), self.items)
@@ -179,7 +181,7 @@ class UI(Form, Base):
     def addAssets(self):
         try:
             self.progressBar.setMaximum(len(self.items))
-            self.progressBar.show( )
+            self.progressBar.show()
             for i, item in enumerate(self.items):
                 if item.isSelected():
                     path, num = item.getPathNum()
@@ -212,6 +214,11 @@ class Item(Form1, Base1):
         
     def setName(self, path):
         self.path = path
+        if path is None:
+            self.setEnabled(False)
+            self.setSelected(False)
+            self.assetButton.setText(self.name)
+            return
         self.assetButton.setText(osp.basename(osp.splitext(self.path)[0]))
     
     def setNum(self, num):
@@ -219,7 +226,7 @@ class Item(Form1, Base1):
         self.num = num
         
     def setAssetName(self, name):
-        self.assetName = name
+        self.name = name
 
     def populate(self):
         self.setName(self.path)

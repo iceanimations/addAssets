@@ -71,6 +71,9 @@
     </item>
     <item>
      <widget class="QScrollArea" name="scrollArea">
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
       <property name="widgetResizable">
        <bool>true</bool>
       </property>
@@ -111,7 +114,7 @@
     <item>
      <widget class="QProgressBar" name="progressBar">
       <property name="value">
-       <number>24</number>
+       <number>0</number>
       </property>
      </widget>
     </item>

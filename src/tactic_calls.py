@@ -121,6 +121,12 @@ def getAssets(ep, seq, context='shaded/combined'):
                                 asset_paths[ep_asset['asset_code']] = symlinks.translatePath(getLatestFile(*newPaths), maps)
                             else:
                                 asset_paths[ep_asset['asset_code']] = symlinks.translatePath(newPaths[0], maps)
+                        else:
+                            asset_paths[ep_asset['asset_code']] = None
+                    else:
+                        asset_paths[ep_asset['asset_code']] = None
+                else:
+                    asset_paths[ep_asset['asset_code']] = None
     return asset_paths, errors
 
 if __name__ == "__main__":
