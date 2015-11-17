@@ -15,9 +15,11 @@ from PyQt4.QtCore import pyqtSignal
 import os.path as osp
 import qutil
 import tactic_calls as tc
-reload(tc)
 import cui
 import appUsageApp
+
+reload(tc)
+reload(cui)
 
 rootPath = qutil.dirname(__file__, 2)
 uiPath = osp.join(rootPath, 'ui')
@@ -36,6 +38,7 @@ class UI(Form, Base):
         self.items = []
         self.title = 'Sequence Assets'
         
+        self.setStyleSheet(cui.styleSheet)
         self.progressBar.hide()
         self.setWindowTitle(self.title)
         self.setServer(server)
