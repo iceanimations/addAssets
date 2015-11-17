@@ -95,7 +95,7 @@ def getAssets(ep, seq, context='shaded/combined'):
                 asset_codes = server.eval("@GET(vfx/asset_in_sequence['sequence_code', '%s'].asset_code)"%seq)
             except Exception as ex:
                 errors['Could not get the Sequence Assets from TACTIC'] = str(ex)
-            if not asset_codes: return []
+            if not asset_codes: return asset_paths, errors
             try:
                 ep_assets = server.query('vfx/asset_in_episode', filters = [('asset_code', asset_codes), ('episode_code', ep)])
             except Exception as ex:
@@ -121,7 +121,6 @@ def getAssets(ep, seq, context='shaded/combined'):
                                 asset_paths[ep_asset['asset_code']] = symlinks.translatePath(getLatestFile(*newPaths), maps)
                             else:
                                 asset_paths[ep_asset['asset_code']] = symlinks.translatePath(newPaths[0], maps)
-    print asset_paths, errors
     return asset_paths, errors
 
 if __name__ == "__main__":
