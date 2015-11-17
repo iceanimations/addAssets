@@ -8,17 +8,20 @@ sys.path.append("R:/Pipe_Repo/Projects/TACTIC")
 import tactic_client_lib as tcl
 import os
 import iutil.symlinks as symlinks
+from auth import user
 
 server = None
 
-def setServer(serv):
+def setServer(serv=None):
     errors = {}
     global server
     if serv: server = serv; return
     try:
-        server = tcl.TacticServerStub(server='dbserver', login='tactic',
-                                      password='tactic123',
-                                      project='test_mansour_ep')
+        if user.user_registered():
+            server = user.get_server()
+        else:
+            user.login('tactic', 'tactic123')
+            server = user.get_server()
     except Exception as ex:
         errors['Could not connect to TACTIC'] = str(ex)
     return errors
@@ -118,6 +121,7 @@ def getAssets(ep, seq, context='shaded/combined'):
                                 asset_paths[ep_asset['asset_code']] = symlinks.translatePath(getLatestFile(*newPaths), maps)
                             else:
                                 asset_paths[ep_asset['asset_code']] = symlinks.translatePath(newPaths[0], maps)
+    print asset_paths, errors
     return asset_paths, errors
 
 if __name__ == "__main__":
