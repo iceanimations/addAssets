@@ -11,7 +11,7 @@ try:
 except:
     from PyQt4 import uic
 from PyQt4.QtGui import QMessageBox, qApp
-from PyQt4.QtCore import pyqtSignal
+from PyQt4.QtCore import pyqtSignal, Qt
 import os.path as osp
 import qutil
 import tactic_calls as tc
@@ -57,6 +57,13 @@ class UI(Form, Base):
         self.setContext(project, ep, None, context)
         
         appUsageApp.updateDatabase('addAssets')
+        
+    def setBusy(self):
+        qApp.setOverrideCursor(Qt.WaitCursor)
+        qApp.processEvents()
+        
+    def releaseBusy(self):
+        qApp.restoreOverrideCursor()
         
     def getSelectedAssets(self):
         items = {}
@@ -138,45 +145,66 @@ class UI(Form, Base):
             self.populateEpisodes()
     
     def populateEpisodes(self):
-        episodes, errors = tc.getEpisodes()
-        if errors:
-            self.showMessage(msg='Error occurred while retrieving the Episodes',
-                             icon=QMessageBox.Critical,
-                             details=qutil.dictionaryToDetails(errors))
-        self.epBox.addItems(episodes)
-    
-    def populateSequences(self, ep):
-        self.seqBox.clear()
-        self.seqBox.addItem('--Select Sequence--')
-        qutil.addOptionVar(epKey, ep)
-        if ep != '--Select Episode--':
-            seqs, errors = tc.getSequences(ep)
+        try:
+            self.setBusy()
+            episodes, errors = tc.getEpisodes()
             if errors:
-                self.showMessage(msg='Error occurred while retrieving the Sequences',
+                self.showMessage(msg='Error occurred while retrieving the Episodes',
                                  icon=QMessageBox.Critical,
                                  details=qutil.dictionaryToDetails(errors))
-            self.seqBox.addItems(seqs)
+            self.epBox.addItems(episodes)
+        except Exception as ex:
+            self.releaseBusy()
+            self.showMessage(msg=str(ex), icon=QMessageBox.Critical)
+        finally:
+            self.releaseBusy()
+    
+    def populateSequences(self, ep):
+        try:
+            self.setBusy()
+            self.seqBox.clear()
+            self.seqBox.addItem('--Select Sequence--')
+            qutil.addOptionVar(epKey, ep)
+            if ep != '--Select Episode--':
+                seqs, errors = tc.getSequences(ep)
+                if errors:
+                    self.showMessage(msg='Error occurred while retrieving the Sequences',
+                                     icon=QMessageBox.Critical,
+                                     details=qutil.dictionaryToDetails(errors))
+                self.seqBox.addItems(seqs)
+        except Exception as ex:
+            self.releaseBusy()
+            self.showMessage(msg=str(ex), icon=QMessageBox.Critical)
+        finally:
+            self.releaseBusy()
     
     def populateAssets(self, seq, context=None):
-        if not context: context = self.getContext()
-        for item in self.items:
-            item.deleteLater()
-        del self.items[:]
-        ep = self.epBox.currentText()
-        if not ep or not seq: return
-        if ep == '--Select Episode--' or seq == '--Select Sequence--': return
-        assets, errors = tc.getAssets(ep, seq, context)
-        if errors:
-            self.showMessage(msg='Error occurred while retrieving the Assets',
-                             icon=QMessageBox.Critical,
-                             details=qutil.dictionaryToDetails(errors))
-        for name, path in assets.items():
-            item = Item(self, path=path, name=name)
-            if item.getPath():
-                item.setSelected(self.isSelectAll())
-            self.itemsLayout.addWidget(item)
-            self.items.append(item)
-        map(lambda itm: itm.selectionChanged.connect(self.handleItemSelectionChange), self.items)
+        try:
+            self.setBusy()
+            if not context: context = self.getContext()
+            for item in self.items:
+                item.deleteLater()
+            del self.items[:]
+            ep = self.epBox.currentText()
+            if not ep or not seq: self.releaseBusy(); return
+            if ep == '--Select Episode--' or seq == '--Select Sequence--': self.releaseBusy(); return
+            assets, errors = tc.getAssets(ep, seq, context)
+            if errors:
+                self.showMessage(msg='Error occurred while retrieving the Assets',
+                                 icon=QMessageBox.Critical,
+                                 details=qutil.dictionaryToDetails(errors))
+            for name, path in assets.items():
+                item = Item(self, path=path, name=name)
+                if item.getPath():
+                    item.setSelected(self.isSelectAll())
+                self.itemsLayout.addWidget(item)
+                self.items.append(item)
+            map(lambda itm: itm.selectionChanged.connect(self.handleItemSelectionChange), self.items)
+        except Exception as ex:
+            self.releaseBusy()
+            self.showMessage(msg=str(ex), icon=QMessageBox.Critical)
+        finally:
+            self.releaseBusy()
         
     def handleItemSelectionChange(self, val):
         flag = True
