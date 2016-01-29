@@ -12,70 +12,6 @@ from auth import user
 
 server = None
 
-def setServer(serv=None):
-    errors = {}
-    global server
-    if serv: server = serv; return
-    try:
-        if user.user_registered():
-            server = user.get_server()
-        else:
-            user.login('tactic', 'tactic123')
-            server = user.get_server()
-    except Exception as ex:
-        errors['Could not connect to TACTIC'] = str(ex)
-    return errors
-        
-def getProjects():
-    errors = {}
-    projects = []
-    if server:
-        try:
-            projects = server.eval("@GET(sthpw/project.code)")
-        except Exception as ex:
-            errors['Could not get the list of projects'] = str(ex)
-    else:
-        errors['Could not find the TACTIC server'] = ''
-    return projects, errors
-    
-        
-def setProject(project):
-    errors = {}
-    if server:
-        if project:
-            try:
-                server.set_project(project)
-            except Exception as ex:
-                errors['Could not set the project'] = str(ex)
-    else:
-        errors['Could not find the TACTIC server'] = ''
-    return errors
-        
-def getEpisodes():
-    eps = []
-    errors = {}
-    if server:
-        try:
-            eps = server.eval("@GET(vfx/episode.code)")
-        except Exception as ex:
-            errors['Could not get the list of episodes from TACTIC'] = str(ex)
-    else:
-        errors['Could not find the TACTIC server'] = ""
-    return eps, errors
-    
-def getSequences(ep):
-    seqs = []
-    errors = {}
-    if server:
-        if ep:
-            try:
-                seqs = server.eval("@GET(vfx/sequence['episode_code', '%s'].code)"%ep)
-            except Exception as ex:
-                errors['Could not get the list of sequences from TACTIC'] = str(ex)
-    else:
-        errors['Could not find the TACTIC server'] = ""
-    return seqs, errors
-
 def getLatestFile(file1, file2):
     latest = file1
     if os.path.getmtime(file2) > os.path.getmtime(file1):
@@ -128,8 +64,3 @@ def getAssets(ep, seq, context='shaded/combined'):
                 else:
                     asset_paths[ep_asset['asset_code']] = None
     return asset_paths, errors
-
-if __name__ == "__main__":
-    pass
-    #set_server()
-    #pprint(get_assets('ep09', 'EP09_SQ001'))

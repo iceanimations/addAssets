@@ -3,20 +3,16 @@ Created on Oct 27, 2015
 
 @author: qurban.ali
 '''
-parentWin = None
-try:
-    from uiContainer import uic
-    import qtify_maya_window as qtfy
-    parentWin = qtfy.getMayaWindow()
-except:
-    from PyQt4 import uic
+from uiContainer import uic
+import qtify_maya_window as qtfy
 from PyQt4.QtGui import QMessageBox, qApp
 from PyQt4.QtCore import pyqtSignal, Qt
 import os.path as osp
 import qutil
-import tactic_calls as tc
+import tacticCalls as tc
 import cui
 import appUsageApp
+import imaya
 
 reload(tc)
 reload(cui)
@@ -24,35 +20,40 @@ reload(cui)
 rootPath = qutil.dirname(__file__, 2)
 uiPath = osp.join(rootPath, 'ui')
 
-projectKey = 'addAssetsProjectKey'
-epKey = 'addAssetsEpKey'
 contextKey = 'addAssetsContextKey'
 
 Form, Base = uic.loadUiType(osp.join(uiPath, 'main.ui'))
-class UI(Form, Base):
-    def __init__(self, parent=parentWin, server=None):
+class UI(Form, Base, cui.TacticUiBase):
+    def __init__(self, parent=qtfy.getMayaWindow()):
         super(UI, self).__init__(parent)
         self.setupUi(self)
 
         self.parentWin = parent
         self.items = []
         self.title = 'Sequence Assets'
+        self.projectKey = 'addAssetsProjectKey'
+        self.epKey = 'addAssetsEpKey'
         
+        self.setServer()
         self.setStyleSheet(cui.styleSheet)
         self.progressBar.hide()
         self.setWindowTitle(self.title)
-        self.setServer(server)
         self.populateProjects()
         
         self.projectBox.currentIndexChanged[str].connect(self.setProject)
         self.epBox.currentIndexChanged[str].connect(self.populateSequences)
-        self.seqBox.currentIndexChanged[str].connect(self.populateAssets)
+        
+        self.seqBox = cui.MultiSelectComboBox(self, '--Sequence--')
+        self.seqBox.setStyleSheet('QPushButton{min-width: 100px;}')
+        self.layout.insertWidget(2, self.seqBox)
+        self.seqBox.selectionDone.connect(self.populateAssets)
+        
         self.addButton.clicked.connect(self.addAssets)
         self.contextBox.currentIndexChanged[str].connect(self.callPopulateAssets)
         self.selectAllButton.clicked.connect(self.selectAll)
 
-        project = qutil.getOptionVar(projectKey)
-        ep = qutil.getOptionVar(epKey)
+        project = qutil.getOptionVar(tc.projectKey)
+        ep = qutil.getOptionVar(tc.episodeKey)
         context = qutil.getOptionVar(contextKey)
         self.setContext(project, ep, None, context)
         
@@ -64,6 +65,24 @@ class UI(Form, Base):
         
     def releaseBusy(self):
         qApp.restoreOverrideCursor()
+        
+    def populateSequences(self, ep):
+        imaya.addOptionVar(tc.episodeKey, ep)
+        self.setBusy()
+        try:
+            self.seqBox.clearItems()
+            if ep != '--Select Episode--':
+                seqs, errors = tc.getSequences(ep)
+                if errors:
+                    self.showMessage(msg='Error occurred while retrieving the Sequences',
+                                     icon=QMessageBox.Critical,
+                                     details=qutil.dictionaryToDetails(errors))
+                self.seqBox.addItems(seqs)
+        except Exception as ex:
+            self.releaseBusy()
+            self.showMessage(msg=str(ex), icon=QMessageBox.Critical)
+        finally:
+            self.releaseBusy()
         
     def getSelectedAssets(self):
         items = {}
@@ -87,21 +106,7 @@ class UI(Form, Base):
                 item.setSelected(self.isSelectAll())
         
     def setContext(self, pro, ep, seq, context):
-        if pro:
-            for i in range(self.projectBox.count()):
-                if self.projectBox.itemText(i) == pro:
-                    self.projectBox.setCurrentIndex(i)
-                    break
-        if ep:
-            for i in range(self.epBox.count()):
-                if self.epBox.itemText(i) == ep:
-                    self.epBox.setCurrentIndex(i)
-                    break
-        if seq:
-            for i in range(self.seqBox.count()):
-                if self.seqBox.itemText(i) == seq:
-                    self.seqBox.setCurrentIndex(i)
-                    break
+        super(UI, self).setContext(pro, ep, seq)
         if context:
             for i in range(self.contextBox.count()):
                 if self.contextBox.itemText(i) == context:
@@ -109,74 +114,11 @@ class UI(Form, Base):
                     break
     
     def callPopulateAssets(self, context):
-        self.populateAssets(self.seqBox.currentText(), context)
+        self.populateAssets(self.seqBox.getSelectedItems(), context)
         qutil.addOptionVar(contextKey, context)
     
     def showMessage(self, **kwargs):
         return cui.showMessage(self, title=self.title, **kwargs)
-        
-    def setServer(self, server):
-        errors = tc.setServer(server)
-        if errors:
-            self.showMessage(msg=errors.keys()[0], icon=QMessageBox.Critical,
-                             details=errors.values()[0])
-        
-    def populateProjects(self):
-        self.projectBox.clear()
-        self.projectBox.addItem('--Select Project--')
-        projects, errors = tc.getProjects()
-        if errors:
-            self.showMessage(msg='Error occurred while retrieving the list of projects from TACTIC',
-                             icon=QMessageBox.Critical,
-                             details=qutil.dictionaryToDetails(errors))
-        if projects:
-            self.projectBox.addItems(projects)
-            
-    def setProject(self, project):
-        self.epBox.clear()
-        qutil.addOptionVar(projectKey, project)
-        self.epBox.addItem('--Select Episode--')
-        if project != '--Select Project--':
-            errors = tc.setProject(project)
-            if errors:
-                self.showMessage(msg='Error occurred while setting the project on TACTIC',
-                                 icon=QMessageBox.Critical,
-                                 details=qutil.dictionaryToDetails(errors))
-            self.populateEpisodes()
-    
-    def populateEpisodes(self):
-        try:
-            self.setBusy()
-            episodes, errors = tc.getEpisodes()
-            if errors:
-                self.showMessage(msg='Error occurred while retrieving the Episodes',
-                                 icon=QMessageBox.Critical,
-                                 details=qutil.dictionaryToDetails(errors))
-            self.epBox.addItems(episodes)
-        except Exception as ex:
-            self.releaseBusy()
-            self.showMessage(msg=str(ex), icon=QMessageBox.Critical)
-        finally:
-            self.releaseBusy()
-    
-    def populateSequences(self, ep):
-        try:
-            self.setBusy()
-            self.seqBox.clear()
-            self.seqBox.addItem('--Select Sequence--')
-            qutil.addOptionVar(epKey, ep)
-            if ep != '--Select Episode--':
-                seqs, errors = tc.getSequences(ep)
-                if errors:
-                    self.showMessage(msg='Error occurred while retrieving the Sequences',
-                                     icon=QMessageBox.Critical,
-                                     details=qutil.dictionaryToDetails(errors))
-                self.seqBox.addItems(seqs)
-        except Exception as ex:
-            self.releaseBusy()
-            self.showMessage(msg=str(ex), icon=QMessageBox.Critical)
-        finally:
-            self.releaseBusy()
     
     def populateAssets(self, seq, context=None):
         try:
@@ -187,7 +129,7 @@ class UI(Form, Base):
             del self.items[:]
             ep = self.epBox.currentText()
             if not ep or not seq: self.releaseBusy(); return
-            if ep == '--Select Episode--' or seq == '--Select Sequence--': self.releaseBusy(); return
+            if ep == '--Select Episode--': self.releaseBusy(); return
             assets, errors = tc.getAssets(ep, seq, context)
             if errors:
                 self.showMessage(msg='Error occurred while retrieving the Assets',
