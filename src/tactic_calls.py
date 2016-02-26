@@ -6,17 +6,11 @@ Created on Oct 26, 2015
 import sys
 sys.path.append("R:/Pipe_Repo/Projects/TACTIC")
 import tactic_client_lib as tcl
-import os
 import iutil.symlinks as symlinks
 from auth import user
+import iutil
 
 server = None
-
-def getLatestFile(file1, file2):
-    latest = file1
-    if os.path.getmtime(file2) > os.path.getmtime(file1):
-        latest = file2
-    return latest
     
 def getAssets(ep, seq, context='shaded/combined'):
     errors = {}
@@ -54,7 +48,7 @@ def getAssets(ep, seq, context='shaded/combined'):
                             errors['Could not find a Maya file for %s'%ep_asset['asset_code']] = 'No Maya or Main key found'
                         if newPaths:
                             if len(newPaths) > 1:
-                                asset_paths[ep_asset['asset_code']] = symlinks.translatePath(getLatestFile(*newPaths), maps)
+                                asset_paths[ep_asset['asset_code']] = symlinks.translatePath(iutil.getLatestFile(newPaths), maps)
                             else:
                                 asset_paths[ep_asset['asset_code']] = symlinks.translatePath(newPaths[0], maps)
                         else:
