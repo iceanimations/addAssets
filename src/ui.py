@@ -135,8 +135,8 @@ class UI(Form, Base, cui.TacticUiBase):
                 self.showMessage(msg='Error occurred while retrieving the Assets',
                                  icon=QMessageBox.Critical,
                                  details=qutil.dictionaryToDetails(errors))
-            for name, path in assets.items():
-                item = Item(self, path=path, name=name)
+            for name in sorted(assets.keys()):
+                item = Item(self, path=assets[name], name=name)
                 if item.getPath():
                     item.setSelected(self.isSelectAll())
                 self.itemsLayout.addWidget(item)
