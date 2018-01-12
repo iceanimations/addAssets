@@ -130,13 +130,18 @@ class UI(Form, Base, cui.TacticUiBase):
             ep = self.epBox.currentText()
             if not ep or not seq: self.releaseBusy(); return
             if ep == '--Select Episode--': self.releaseBusy(); return
-            assets, errors = tc.getAssets(ep, seq, context)
+            assets, assets_count, errors = tc.getAssets(ep, seq, context)
             if errors:
                 self.showMessage(msg='Error occurred while retrieving the Assets',
                                  icon=QMessageBox.Critical,
                                  details=qutil.dictionaryToDetails(errors))
             for name in sorted(assets.keys()):
-                item = Item(self, path=assets[name], name=name)
+                try:
+                    num = assets_count[name]
+                except KeyError:
+                    num = 1
+                if num < 1: num = 1
+                item = Item(self, path=assets[name], num=num, name=name)
                 if item.getPath():
                     item.setSelected(self.isSelectAll())
                 self.itemsLayout.addWidget(item)
